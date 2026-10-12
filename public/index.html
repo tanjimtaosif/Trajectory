@@ -87,7 +87,7 @@
       <label id="drop" for="cv" class="block cursor-pointer border border-dashed border-zinc-300 rounded-lg px-4 py-6 text-center bg-zinc-50/60 hover:border-indigo-400">
         <svg class="w-6 h-6 mx-auto text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9m0 0 3 3m-3-3-3 3M4.5 16.5a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3"/></svg>
         <p id="dropText" class="text-sm text-zinc-500 mt-2">Drag a PDF or DOCX here, or <span class="text-indigo-600 font-medium">browse</span></p>
-        <p class="text-xs text-zinc-400 mt-1">Up to 5 MB · used to refine your skill gap</p>
+        <p class="text-xs text-zinc-400 mt-1">Up to 4 MB · used to refine your skill gap</p>
         <input id="cv" type="file" accept=".pdf,.docx" class="sr-only" />
       </label>
       <button type="button" id="cvClear" hidden class="mt-2 text-xs text-zinc-500 hover:text-red-600">Remove file</button>
@@ -198,7 +198,7 @@ const getEdu = () => [...document.querySelectorAll('.edu')]
 let cvFile = null;
 function setCv(f) {
   if (f && !/\.(pdf|docx)$/i.test(f.name)) { $('formMsg').textContent = 'CV must be a PDF or DOCX file.'; return; }
-  if (f && f.size > 5 * 1024 * 1024) { $('formMsg').textContent = 'CV must be under 5 MB.'; return; }
+  if (f && f.size > 4 * 1024 * 1024) { $('formMsg').textContent = 'CV must be under 4 MB.'; return; }
   cvFile = f;
   $('dropText').innerHTML = f ? `<span class="font-medium text-zinc-700">${esc(f.name)}</span> <span class="text-zinc-400">· ${(f.size / 1024).toFixed(0)} KB</span>` : 'Drag a PDF or DOCX here, or <span class="text-indigo-600 font-medium">browse</span>';
   $('cvClear').hidden = !f;

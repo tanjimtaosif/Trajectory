@@ -76,8 +76,13 @@ app.post('/api/analyze', upload.single('cv'), async (req, res) => {
 });
 
 app.use((err, _req, res, _next) => {
-  res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'CV must be under 5 MB.' : err.message });
+  res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'CV must be under 4 MB.' : err.message });
 });
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Trajectory running at http://localhost:${port}`));
+// On Vercel the app is exported as a serverless function (api/index.js) instead of listening.
+if (!process.env.VERCEL) {
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => console.log(`Trajectory running at http://localhost:${port}`));
+}
+
+export default app;

@@ -26,5 +26,5 @@
     "owasp.org", "dataintensive.net", "udacity.com", "udemy.com", "pluralsight.com", "kaggle.com", "huggingface.co",
     "spring.io", "dotnet.microsoft.com", "rust-lang.org", "figma.com", "sre.google", "martinfowler.com"
   ],
-  "limits": { "maxSkills": 50, "maxJobs": 6, "cvMaxBytes": 5242880 }
+  "limits": { "maxSkills": 50, "maxJobs": 6, "cvMaxBytes": 4194304 }
 }
