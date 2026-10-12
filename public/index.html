@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en" class="antialiased">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trajectory</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body{font-family:'Inter',system-ui,sans-serif;}
+  .mono{font-family:'JetBrains Mono',ui-monospace,monospace;}
+  .tnum{font-variant-numeric:tabular-nums;}
+  ::selection{background:#4f46e533;}
+  input[type=number]::-webkit-inner-spin-button{opacity:0;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+  .sk{background:#f1f1f3;border-radius:6px;animation:pulse 1.4s ease-in-out infinite}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body class="bg-zinc-50 text-zinc-900">
+
+<header class="sticky top-0 z-10 h-14 border-b border-zinc-200 bg-white/90 backdrop-blur flex items-center px-5">
+  <div class="flex items-center gap-2">
+    <div class="w-6 h-6 rounded bg-indigo-600 flex items-center justify-center">
+      <svg viewBox="0 0 16 16" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 13 L7 7 L10 10 L14 4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <span class="font-semibold tracking-tight text-[15px]">Trajectory</span>
+  </div>
+  <div class="ml-auto flex items-center gap-3">
+    <span id="status" class="hidden items-center gap-2 text-xs font-medium text-indigo-600"></span>
+    <button id="newBtn" hidden class="h-8 px-3 rounded-md bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700">New analysis</button>
+    <span id="formNote" class="flex items-center gap-1.5 text-xs text-zinc-500"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>No account needed · nothing is stored</span>
+  </div>
+</header>
+
+<!-- ============ INTAKE ============ -->
+<main id="intake" class="max-w-2xl mx-auto px-5 py-10">
+  <div class="mb-6">
+    <h1 class="text-xl font-semibold tracking-tight">Map your next move</h1>
+    <p class="text-sm text-zinc-500 mt-1">Tell us the role you're aiming for. We'll analyze your skill gap, build a learning roadmap, surface matching jobs, and estimate pay — grounded in live market data.</p>
+  </div>
+
+  <form id="form" class="bg-white border border-zinc-200 rounded-xl divide-y divide-zinc-100" novalidate>
+    <div class="p-5">
+      <label for="position" class="block text-[13px] font-medium text-zinc-700 mb-1.5">Target position <span class="text-red-500">*</span></label>
+      <input id="position" type="text" maxlength="100" placeholder="e.g. Backend Engineer, Data Scientist, DevOps Engineer" class="w-full h-10 px-3 rounded-lg border border-zinc-300 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500" />
+      <p class="text-xs text-zinc-400 mt-1.5">The role you want the analysis to target.</p>
+    </div>
+
+    <div class="p-5">
+      <label for="years" class="block text-[13px] font-medium text-zinc-700 mb-1.5">Years of experience <span class="text-red-500">*</span></label>
+      <div class="inline-flex items-center border border-zinc-300 rounded-lg overflow-hidden">
+        <button type="button" id="yMinus" class="w-10 h-10 text-zinc-500 hover:bg-zinc-50 text-lg leading-none">−</button>
+        <input id="years" type="number" min="0" max="50" value="0" class="w-14 h-10 text-center text-sm tnum border-x border-zinc-200 focus:outline-none" />
+        <button type="button" id="yPlus" class="w-10 h-10 text-zinc-500 hover:bg-zinc-50 text-lg leading-none">+</button>
+      </div>
+      <span class="ml-3 text-xs text-zinc-400">0–50 · we calibrate expectations to this level</span>
+    </div>
+
+    <div class="p-5">
+      <label for="skillInput" class="block text-[13px] font-medium text-zinc-700 mb-1.5">Skills <span class="text-red-500">*</span></label>
+      <div class="relative">
+        <div id="skillBox" class="w-full min-h-10 px-2.5 py-1.5 rounded-lg border border-zinc-300 flex flex-wrap items-center gap-1.5 focus-within:ring-2 focus-within:ring-indigo-500/30 focus-within:border-indigo-500">
+          <input id="skillInput" type="text" autocomplete="off" placeholder="Start typing — e.g. Python, React, SQL…" class="flex-1 min-w-[10rem] h-7 px-1 text-sm placeholder:text-zinc-400 focus:outline-none bg-transparent" />
+        </div>
+        <ul id="suggest" hidden class="absolute z-20 left-0 right-0 mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg max-h-56 overflow-auto py-1"></ul>
+      </div>
+      <div class="flex items-center justify-between mt-1.5">
+        <p class="text-xs text-zinc-400">Press Enter to add. Backspace removes the last one.</p>
+        <span id="skillCount" class="text-xs text-zinc-400 tnum">0 / 50</span>
+      </div>
+      <div id="popular" class="mt-2 flex flex-wrap gap-1.5"></div>
+    </div>
+
+    <div class="p-5">
+      <div class="flex items-center justify-between mb-2">
+        <label class="block text-[13px] font-medium text-zinc-700">Education</label>
+        <button type="button" id="addEdu" class="text-xs font-medium text-indigo-600 hover:text-indigo-700">+ Add another</button>
+      </div>
+      <div id="eduRows" class="space-y-2"></div>
+    </div>
+
+    <div class="p-5">
+      <label class="block text-[13px] font-medium text-zinc-700 mb-1.5">CV <span class="text-zinc-400 font-normal">(optional)</span></label>
+      <label id="drop" for="cv" class="block cursor-pointer border border-dashed border-zinc-300 rounded-lg px-4 py-6 text-center bg-zinc-50/60 hover:border-indigo-400">
+        <svg class="w-6 h-6 mx-auto text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9m0 0 3 3m-3-3-3 3M4.5 16.5a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3"/></svg>
+        <p id="dropText" class="text-sm text-zinc-500 mt-2">Drag a PDF or DOCX here, or <span class="text-indigo-600 font-medium">browse</span></p>
+        <p class="text-xs text-zinc-400 mt-1">Up to 5 MB · used to refine your skill gap</p>
+        <input id="cv" type="file" accept=".pdf,.docx" class="sr-only" />
+      </label>
+      <button type="button" id="cvClear" hidden class="mt-2 text-xs text-zinc-500 hover:text-red-600">Remove file</button>
+    </div>
+
+    <div class="p-5 flex items-center justify-between gap-4 bg-zinc-50/40 rounded-b-xl">
+      <p id="formMsg" class="text-xs text-zinc-400">Add a position and at least one skill to continue.</p>
+      <button id="submit" type="submit" disabled class="h-10 px-5 rounded-lg bg-zinc-200 text-zinc-400 text-sm font-semibold cursor-not-allowed shrink-0">Generate my roadmap</button>
+    </div>
+  </form>
+</main>
+
+<!-- ============ DASHBOARD ============ -->
+<main id="dash" hidden class="max-w-4xl mx-auto px-5 py-6 space-y-4"></main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const safeUrl = (u) => { try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : '#'; } catch { return '#'; } };
+const MAX_SKILLS = 50;
+
+const SKILLS = ['Python','JavaScript','TypeScript','Java','C#','C++','C','Go','Rust','Ruby','PHP','Kotlin','Swift','SQL','PostgreSQL','MySQL','MongoDB','Redis','Elasticsearch','React','Next.js','Vue','Angular','Svelte','Node.js','Express','Django','Flask','FastAPI','Spring Boot','.NET','Laravel','Ruby on Rails','HTML','CSS','Tailwind CSS','GraphQL','REST APIs','gRPC','Docker','Kubernetes','AWS','Azure','Google Cloud','Terraform','Ansible','CI/CD','GitHub Actions','Jenkins','Linux','Git','Kafka','RabbitMQ','System Design','Microservices','Observability','Prometheus','Grafana','Machine Learning','Deep Learning','PyTorch','TensorFlow','scikit-learn','Pandas','NumPy','Data Analysis','Tableau','Power BI','Excel','Spark','Airflow','dbt','NLP','LLMs','Figma','UI Design','UX Research','Agile','Scrum','Project Management','Product Management','Testing','Cypress','Selenium','Cybersecurity','Flutter','React Native','Android','iOS'];
+const POPULAR = ['Python','JavaScript','SQL','React','AWS'];
+
+/* ---------- skills input ---------- */
+const skills = [];
+function renderSkills() {
+  document.querySelectorAll('.chip').forEach((n) => n.remove());
+  skills.forEach((s, i) => {
+    const el = document.createElement('span');
+    el.className = 'chip h-7 pl-2.5 pr-1.5 rounded-md bg-zinc-100 text-zinc-700 text-xs font-medium flex items-center gap-1';
+    el.innerHTML = `${esc(s)}<button type="button" aria-label="Remove ${esc(s)}" class="w-4 h-4 rounded text-zinc-400 hover:text-red-600 hover:bg-zinc-200 leading-none">×</button>`;
+    el.querySelector('button').onclick = () => { skills.splice(i, 1); renderSkills(); validate(); };
+    $('skillBox').insertBefore(el, $('skillInput'));
+  });
+  $('skillCount').textContent = `${skills.length} / ${MAX_SKILLS}`;
+  renderPopular();
+}
+function addSkill(s) {
+  s = s.trim();
+  if (!s || skills.length >= MAX_SKILLS || skills.some((x) => x.toLowerCase() === s.toLowerCase())) return;
+  const canon = SKILLS.find((x) => x.toLowerCase() === s.toLowerCase());
+  skills.push(canon || s);
+  $('skillInput').value = '';
+  hideSuggest();
+  renderSkills(); validate();
+}
+function renderPopular() {
+  $('popular').innerHTML = '<span class="text-xs text-zinc-400 mr-1 self-center">Popular:</span>';
+  POPULAR.filter((p) => !skills.includes(p)).forEach((p) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'h-7 px-2.5 rounded-md border border-dashed border-zinc-300 text-xs text-zinc-500 hover:border-indigo-400 hover:text-indigo-600';
+    b.textContent = '+ ' + p;
+    b.onclick = () => addSkill(p);
+    $('popular').appendChild(b);
+  });
+}
+let sel = -1;
+function hideSuggest() { $('suggest').hidden = true; sel = -1; }
+function showSuggest() {
+  const q = $('skillInput').value.trim().toLowerCase();
+  if (!q) return hideSuggest();
+  const have = new Set(skills.map((s) => s.toLowerCase()));
+  const m = SKILLS.filter((s) => s.toLowerCase().includes(q) && !have.has(s.toLowerCase())).slice(0, 8);
+  if (!m.length) return hideSuggest();
+  $('suggest').innerHTML = m.map((s, i) => `<li data-v="${esc(s)}" class="px-3 py-1.5 text-sm cursor-pointer ${i === sel ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-zinc-50'}">${esc(s)}</li>`).join('');
+  $('suggest').hidden = false;
+  $('suggest').querySelectorAll('li').forEach((li) => li.onmousedown = (e) => { e.preventDefault(); addSkill(li.dataset.v); });
+}
+$('skillInput').addEventListener('input', () => { sel = -1; showSuggest(); });
+$('skillInput').addEventListener('blur', hideSuggest);
+$('skillInput').addEventListener('keydown', (e) => {
+  const items = [...$('suggest').querySelectorAll('li')];
+  if (e.key === 'ArrowDown' && items.length) { e.preventDefault(); sel = (sel + 1) % items.length; showSuggest(); }
+  else if (e.key === 'ArrowUp' && items.length) { e.preventDefault(); sel = (sel - 1 + items.length) % items.length; showSuggest(); }
+  else if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    addSkill(sel >= 0 && items[sel] ? items[sel].dataset.v : e.target.value.replace(/,$/, ''));
+  } else if (e.key === 'Backspace' && !e.target.value && skills.length) { skills.pop(); renderSkills(); validate(); }
+});
+$('skillBox').addEventListener('click', () => $('skillInput').focus());
+
+/* ---------- years ---------- */
+const clampYears = () => { let v = parseInt($('years').value, 10); if (isNaN(v)) v = 0; $('years').value = Math.min(50, Math.max(0, v)); };
+$('yMinus').onclick = () => { $('years').value = +$('years').value - 1; clampYears(); validate(); };
+$('yPlus').onclick = () => { $('years').value = +$('years').value + 1; clampYears(); validate(); };
+$('years').addEventListener('change', () => { clampYears(); validate(); });
+
+/* ---------- education ---------- */
+const inputCls = 'h-9 px-2.5 rounded-lg border border-zinc-300 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500';
+function addEduRow() {
+  if (document.querySelectorAll('.edu').length >= 5) return;
+  const d = document.createElement('div');
+  d.className = 'edu grid grid-cols-12 gap-2';
+  d.innerHTML = `<input data-k="degree" class="${inputCls} col-span-6 sm:col-span-3" placeholder="Degree"/>
+    <input data-k="field" class="${inputCls} col-span-6 sm:col-span-4" placeholder="Field"/>
+    <input data-k="institution" class="${inputCls} col-span-8 sm:col-span-3" placeholder="Institution"/>
+    <input data-k="year" class="${inputCls} col-span-4 sm:col-span-2" placeholder="Year" maxlength="4"/>`;
+  $('eduRows').appendChild(d);
+}
+$('addEdu').onclick = addEduRow;
+const getEdu = () => [...document.querySelectorAll('.edu')]
+  .map((r) => Object.fromEntries([...r.querySelectorAll('input')].map((i) => [i.dataset.k, i.value.trim()])))
+  .filter((e) => Object.values(e).some(Boolean));
+
+/* ---------- CV ---------- */
+let cvFile = null;
+function setCv(f) {
+  if (f && !/\.(pdf|docx)$/i.test(f.name)) { $('formMsg').textContent = 'CV must be a PDF or DOCX file.'; return; }
+  if (f && f.size > 5 * 1024 * 1024) { $('formMsg').textContent = 'CV must be under 5 MB.'; return; }
+  cvFile = f;
+  $('dropText').innerHTML = f ? `<span class="font-medium text-zinc-700">${esc(f.name)}</span> <span class="text-zinc-400">· ${(f.size / 1024).toFixed(0)} KB</span>` : 'Drag a PDF or DOCX here, or <span class="text-indigo-600 font-medium">browse</span>';
+  $('cvClear').hidden = !f;
+  validate();
+}
+$('cv').onchange = (e) => setCv(e.target.files[0] || null);
+$('cvClear').onclick = () => { $('cv').value = ''; setCv(null); };
+['dragover', 'dragenter'].forEach((ev) => $('drop').addEventListener(ev, (e) => { e.preventDefault(); $('drop').classList.add('border-indigo-400'); }));
+['dragleave', 'drop'].forEach((ev) => $('drop').addEventListener(ev, () => $('drop').classList.remove('border-indigo-400')));
+$('drop').addEventListener('drop', (e) => { e.preventDefault(); if (e.dataTransfer.files[0]) setCv(e.dataTransfer.files[0]); });
+
+/* ---------- validation ---------- */
+function validate() {
+  const ok = $('position').value.trim() && skills.length;
+  const b = $('submit');
+  b.disabled = !ok;
+  b.className = 'h-10 px-5 rounded-lg text-sm font-semibold shrink-0 ' + (ok ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-zinc-200 text-zinc-400 cursor-not-allowed');
+  $('formMsg').textContent = ok ? 'Ready when you are.' : 'Add a position and at least one skill to continue.';
+}
+$('position').addEventListener('input', validate);
+
+/* ---------- dashboard rendering ---------- */
+const spinner = '<svg class="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" stroke-opacity=".25"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
+const badge = (n, active = true) => `<span class="w-6 h-6 rounded-md ${active ? 'bg-indigo-50 text-indigo-600' : 'bg-zinc-100 text-zinc-400'} flex items-center justify-center text-xs font-semibold">${n}</span>`;
+const head = (n, title, sub, right = '', active = true) => `<div class="flex items-center gap-2 px-5 py-3.5 border-b border-zinc-100">${badge(n, active)}<h2 class="text-sm font-semibold tracking-tight ${active ? '' : 'text-zinc-500'}">${title}</h2>${sub ? `<span class="hidden sm:inline text-xs text-zinc-400">${sub}</span>` : ''}<span class="ml-auto">${right}</span></div>`;
+const loading = (t) => `<span class="inline-flex items-center gap-1.5 text-xs text-indigo-600">${spinner}${t}</span>`;
+const ready = '<span class="inline-flex items-center gap-1.5 text-xs text-emerald-600"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Ready</span>';
+const skRows = (n) => '<div class="p-5 space-y-3">' + Array.from({ length: n }, () => '<div class="space-y-2"><div class="sk h-3.5 w-48"></div><div class="sk h-3 w-72 max-w-full"></div></div>').join('') + '</div>';
+const errBox = (m) => `<div class="p-5 text-sm text-red-600 bg-red-50/40">${esc(m)}</div>`;
+const money = (n, c) => { try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: c, maximumFractionDigits: 0 }).format(n); } catch { return `${Math.round(n).toLocaleString()} ${c}`; } };
+const panels = { profile: 'p-profile', gap: 'p-gap', roadmap: 'p-roadmap', jobs: 'p-jobs', salary: 'p-salary' };
+const sec = (id, html) => { $(id).innerHTML = html; };
+
+function initDash() {
+  $('dash').innerHTML = ['p-profile', 'p-gap', 'p-roadmap', 'p-jobs', 'p-salary'].map((id) => `<section id="${id}" class="bg-white border border-zinc-200 rounded-xl"></section>`).join('');
+  sec('p-profile', '<div class="p-5 space-y-3"><div class="sk h-5 w-56"></div><div class="sk h-3.5 w-80 max-w-full"></div></div>');
+  sec('p-gap', head(1, 'Skill gap', '', loading('Analyzing your profile…')) + skRows(2));
+  sec('p-roadmap', head(2, 'Learning roadmap', '', '<span class="text-xs text-zinc-400">Queued</span>', false) + skRows(1));
+  sec('p-jobs', head(3, 'Matching roles', '', '<span class="text-xs text-zinc-400">Queued</span>', false) + skRows(1));
+  sec('p-salary', head(4, 'Salary estimate', '', '<span class="text-xs text-zinc-400">Queued</span>', false) + skRows(1));
+}
+
+const chip = (t, cls, title = '') => `<span ${title ? `title="${esc(title)}"` : ''} class="h-7 px-2.5 rounded-md ${cls} text-xs font-medium flex items-center">${esc(t)}</span>`;
+
+function renderProfile(p, g) {
+  const edu = (p.education || []).map((e) => [e.degree, e.field, e.institution, e.year].filter(Boolean).join(', ')).filter(Boolean).join(' · ');
+  sec('p-profile', `<div class="p-5">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2.5 flex-wrap"><h1 class="text-lg font-semibold tracking-tight">${esc(p.position)}</h1>${g && g.level ? `<span class="inline-flex items-center h-6 px-2 rounded-md bg-zinc-100 text-zinc-600 text-xs font-medium">${esc(g.level)}</span>` : ''}</div>
+        <p class="text-sm text-zinc-500 mt-1 tnum">${esc(p.years)} ${p.years === 1 ? 'year' : 'years'} experience${edu ? ' · ' + esc(edu) : ''}${p.cvUsed ? ' · CV analyzed' : ''}</p>
+        ${g && g.summary ? `<p class="text-sm text-zinc-700 mt-3">${esc(g.summary)}</p>` : ''}
+      </div>
+    </div>
+    <div class="mt-3 flex flex-wrap gap-1.5">${p.skills.map((s) => `<span class="h-6 px-2 rounded bg-zinc-100 text-zinc-600 text-xs font-medium flex items-center">${esc(s)}</span>`).join('')}</div></div>`);
+}
+
+function renderGap(g) {
+  const n = (x) => `<span class="${x}">${''}</span>`;
+  sec('p-gap', head(1, 'Skill gap', "What you have, what's missing, what to do first", ready) + `
+  <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-zinc-100">
+    <div class="p-5"><div class="text-xs font-semibold text-emerald-600 uppercase tracking-wide mb-3">Have <span class="text-zinc-300 font-normal tnum">${g.have.length}</span></div>
+      <div class="flex flex-wrap gap-1.5">${g.have.map((s) => chip(s, 'bg-emerald-50 text-emerald-700')).join('') || '<span class="text-xs text-zinc-400">No overlap found yet.</span>'}</div></div>
+    <div class="p-5"><div class="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-3">Missing <span class="text-zinc-300 font-normal tnum">${g.missing.length}</span></div>
+      <div class="flex flex-wrap gap-1.5">${g.missing.map((m) => chip(m.skill, 'bg-zinc-100 text-zinc-600', m.reason)).join('')}</div></div>
+    <div class="p-5 bg-indigo-50/30"><div class="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-3">Do first <span class="text-indigo-300 font-normal tnum">${g.priorities.length}</span></div>
+      <ol class="space-y-2.5">${g.priorities.map((p, i) => `<li class="flex gap-2.5"><span class="w-5 h-5 rounded bg-indigo-600 text-white text-[11px] font-semibold flex items-center justify-center shrink-0 tnum">${i + 1}</span><div><div class="text-[13px] font-medium text-zinc-800">${esc(p.skill)}</div>${p.why ? `<div class="text-xs text-zinc-500">${esc(p.why)}</div>` : ''}</div></li>`).join('')}</ol></div>
+  </div>`);
+  sec('p-roadmap', head(2, 'Learning roadmap', '', loading('Resolving learning sources…')) + '<div class="p-5 space-y-4">' + [1, 2].map(() => '<div class="flex gap-4"><div class="sk w-4 h-4 rounded-full shrink-0"></div><div class="flex-1 space-y-2"><div class="sk h-3.5 w-40"></div><div class="grid sm:grid-cols-2 gap-2"><div class="sk h-16"></div><div class="sk h-16"></div></div></div></div>').join('') + '</div>');
+  sec('p-jobs', head(3, 'Matching roles', '', loading('Resolving job sources…')) + skRows(2));
+}
+
+function renderRoadmap(r) {
+  const steps = r.steps || [];
+  sec('p-roadmap', head(2, 'Learning roadmap', 'Ordered — close the top gaps first', ready) + `<div class="p-5">
+    <ol class="relative border-l border-zinc-200 ml-2.5 space-y-6">${steps.map((s, i) => `
+      <li class="pl-6 relative">
+        <span class="absolute -left-[9px] top-0.5 w-4 h-4 rounded-full ${i < 2 ? 'bg-indigo-600' : 'bg-zinc-300'} border-2 border-white"></span>
+        <div class="flex items-baseline gap-2"><h3 class="text-sm font-semibold text-zinc-800">${esc(s.skill)}</h3>${s.hours ? `<span class="text-xs text-zinc-400 tnum">~${s.hours}h</span>` : ''}</div>
+        ${s.resources.length ? `<div class="mt-2 grid sm:grid-cols-2 gap-2">${s.resources.map((x) => `
+          <a href="${esc(safeUrl(x.url))}" target="_blank" rel="noopener noreferrer" class="group block border border-zinc-200 rounded-lg p-3 hover:border-indigo-300 hover:bg-indigo-50/30">
+            <div class="flex items-center gap-1.5"><span class="h-4 px-1.5 rounded bg-zinc-100 text-zinc-500 text-[10px] font-semibold uppercase flex items-center">${esc(x.type)}</span><span class="text-xs text-zinc-400 mono truncate">${esc(x.host)}</span></div>
+            <div class="text-[13px] font-medium text-zinc-800 mt-1 group-hover:text-indigo-700">${esc(x.title)}</div></a>`).join('')}</div>`
+          : `<div class="mt-2 text-xs text-zinc-500">No verified resources found. <a class="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer" href="https://roadmap.sh">Browse roadmap.sh</a></div>`}
+        ${s.project ? `<div class="mt-2 text-xs text-zinc-500 bg-amber-50/60 border border-amber-100 rounded-md px-2.5 py-1.5"><span class="font-medium text-amber-700">Build:</span> ${esc(s.project)}</div>` : ''}
+      </li>`).join('')}</ol>
+    <p class="mt-5 text-xs text-zinc-400">Links are limited to configured learning sources and were checked as reachable before showing.</p></div>`);
+}
+
+function renderJobs(j) {
+  const jobs = j.jobs || [];
+  sec('p-jobs', head(3, 'Matching roles', `${jobs.length} role${jobs.length === 1 ? '' : 's'} from configured sources`, ready) +
+    (jobs.length ? `<div class="divide-y divide-zinc-100">${jobs.map((x) => `
+      <div class="px-5 py-4 flex items-start gap-4 hover:bg-zinc-50/60">
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2"><h3 class="text-[14px] font-semibold text-zinc-800 truncate">${esc(x.title)}</h3><span class="shrink-0 h-5 px-1.5 rounded bg-zinc-100 text-zinc-500 text-[11px] font-medium flex items-center">${esc(x.mode)}</span></div>
+          <div class="text-[13px] text-zinc-500 mt-0.5">${esc(x.company)}${x.location ? ' · ' + esc(x.location) : ''} <span class="text-zinc-300">·</span> <span class="text-zinc-400">${esc(x.source)}</span></div>
+          <div class="mt-2 flex flex-wrap items-center gap-1.5">
+            ${x.requiredCount === 0 ? '<span class="text-[11px] text-zinc-400">Requirements could not be extracted.</span>'
+              : x.missing.length ? `<span class="text-[11px] text-zinc-400 mr-0.5">You're missing:</span>${x.missing.map((m) => `<span class="h-5 px-1.5 rounded bg-red-50 text-red-600 text-[11px] font-medium flex items-center">${esc(m)}</span>`).join('')}`
+              : '<span class="h-5 px-1.5 rounded bg-emerald-50 text-emerald-600 text-[11px] font-medium flex items-center">Strong match — no gaps found</span>'}
+          </div>
+        </div>
+        <a href="${esc(safeUrl(x.url))}" target="_blank" rel="noopener noreferrer" class="shrink-0 h-8 px-3 rounded-md border border-zinc-300 text-xs font-medium text-zinc-700 hover:bg-zinc-50 inline-flex items-center gap-1.5">View<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 17 17 7m0 0H8m9 0v9"/></svg></a>
+      </div>`).join('')}</div>`
+    : '<div class="p-5 text-sm text-zinc-500">No current postings matched this role title on the configured sources. Try a broader title.</div>') +
+    `<div class="px-5 py-2.5 border-t border-zinc-100 text-xs text-zinc-400">${j.sources.length ? `Sourced from ${esc(j.sources.join(', '))}. Gaps computed against your skills.` : 'No job source responded.'}</div>`);
+  sec('p-salary', head(4, 'Salary estimate', '', loading('Collecting salary data…')) + '<div class="p-5"><div class="flex items-end gap-6"><div class="sk h-9 w-40"></div><div class="flex-1"><div class="sk h-2 w-full rounded-full"></div></div></div></div>');
+}
+
+function renderSalary(s, g, p) {
+  const tried = (s.tried || []).map((t) => `${esc(t.name)}: ${esc(t.note)}`).join(' · ');
+  if (s.insufficient) {
+    sec('p-salary', head(4, 'Salary estimate', esc(p.position), '<span class="inline-flex items-center h-5 px-2 rounded bg-zinc-100 text-zinc-600 text-[11px] font-medium">Not enough data</span>') +
+      `<div class="p-5 text-sm text-zinc-600">${esc(s.reason || "We couldn't retrieve enough verifiable salary figures for this role from the configured sources, so we're not showing an estimate rather than guessing.")}</div><div class="px-5 py-2.5 border-t border-zinc-100 text-xs text-zinc-400">${tried || 'No sources responded.'}</div>`);
+    return;
+  }
+  const conf = { High: 'bg-emerald-50 text-emerald-700 border-emerald-200', Medium: 'bg-amber-50 text-amber-700 border-amber-200', Low: 'bg-red-50 text-red-700 border-red-200' }[s.confidence];
+  const span = s.high - s.low || 1;
+  const pos = Math.min(100, Math.max(0, ((s.median - s.low) / span) * 100));
+  sec('p-salary', head(4, 'Salary estimate', `${esc(p.position)} · ${esc(g.level || '')}`, `<span class="inline-flex items-center h-5 px-2 rounded text-[11px] font-medium border ${conf}">${esc(s.confidence)} confidence</span>`) + `
+    <div class="p-5">
+      <div class="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6">
+        <div><div class="text-xs text-zinc-400 uppercase tracking-wide">Median</div>
+          <div class="text-3xl font-semibold tracking-tight tnum mt-0.5">${esc(money(s.median, s.currency))}<span class="text-base font-normal text-zinc-400">/yr</span></div></div>
+        <div class="flex-1 pb-1">
+          <div class="relative h-2 rounded-full bg-zinc-100"><div class="absolute inset-y-0 left-0 right-0 rounded-full bg-indigo-200"></div><div class="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-indigo-600 border-2 border-white" style="left:calc(${pos}% - 6px)"></div></div>
+          <div class="flex justify-between mt-1.5 text-xs text-zinc-500 tnum"><span>${esc(money(s.low, s.currency))} <span class="text-zinc-400">low</span></span><span>${esc(money(s.high, s.currency))} <span class="text-zinc-400">high</span></span></div>
+        </div></div>
+      ${s.note ? `<div class="mt-4 text-sm text-zinc-700">${esc(s.note)}</div>` : ''}
+      <div class="mt-4 flex items-center gap-2 text-xs text-zinc-500 bg-zinc-50 border border-zinc-100 rounded-lg px-3 py-2">Figures in ${esc(s.currency)}, annualized from ${s.points} data points; median of figures published by the sources below.</div>
+    </div>
+    <div class="px-5 py-2.5 border-t border-zinc-100 text-xs text-zinc-400">Based on ${esc(s.sources.join(', '))}. ${s.tried.some((t) => !t.ok) ? 'Not available: ' + s.tried.filter((t) => !t.ok).map((t) => `${esc(t.name)} (${esc(t.note)})`).join(', ') + '.' : ''}</div>`);
+}
+
+/* ---------- run ---------- */
+let state, abortCtl;
+function setStatus(html) { $('status').className = html ? 'flex items-center gap-2 text-xs font-medium text-indigo-600' : 'hidden'; $('status').innerHTML = html; }
+function show(dash) {
+  $('intake').hidden = dash; $('dash').hidden = !dash; $('newBtn').hidden = !dash; $('formNote').hidden = dash;
+  window.scrollTo(0, 0);
+}
+$('newBtn').onclick = () => { if (abortCtl) abortCtl.abort(); setStatus(''); show(false); };
+
+$('form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if ($('submit').disabled) return;
+  const fd = new FormData();
+  fd.append('position', $('position').value.trim());
+  fd.append('years', $('years').value);
+  fd.append('skills', JSON.stringify(skills));
+  fd.append('education', JSON.stringify(getEdu()));
+  if (cvFile) fd.append('cv', cvFile);
+
+  state = {};
+  initDash(); show(true);
+  setStatus(spinner + ' Analyzing…');
+  abortCtl = new AbortController();
+  try {
+    const res = await fetch('/api/analyze', { method: 'POST', body: fd, signal: abortCtl.signal });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Request failed');
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '', doneCount = 0;
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+        if (!line) continue;
+        const { type, data } = JSON.parse(line);
+        handle(type, data);
+        if (['gap', 'roadmap', 'jobs', 'salary'].includes(type)) { doneCount++; setStatus(`${spinner} Analyzing · <span class="tnum">${doneCount} of 4 panels ready</span>`); }
+      }
+    }
+    setStatus('');
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    setStatus('');
+    show(false);
+    $('formMsg').textContent = err.message;
+  }
+});
+
+function handle(type, data) {
+  if (type === 'profile') { state.profile = data; renderProfile(data); }
+  else if (type === 'gap') { state.gap = data; renderProfile(state.profile, data); renderGap(data); }
+  else if (type === 'roadmap') renderRoadmap(data);
+  else if (type === 'jobs') renderJobs(data);
+  else if (type === 'salary') renderSalary(data, state.gap, state.profile);
+  else if (type === 'error') {
+    const id = panels[data.panel] || 'p-gap';
+    const n = { gap: 1, roadmap: 2, jobs: 3, salary: 4 }[data.panel] || 1;
+    const t = { gap: 'Skill gap', roadmap: 'Learning roadmap', jobs: 'Matching roles', salary: 'Salary estimate' }[data.panel] || 'Analysis';
+    sec(id, head(n, t, '', '<span class="text-xs text-red-600">Failed</span>') + errBox(data.message));
+    if (data.panel === 'jobs') sec('p-salary', head(4, 'Salary estimate', '', loading('Collecting salary data…')) + skRows(1));
+    if (data.panel === 'gap') ['p-roadmap', 'p-jobs', 'p-salary'].forEach((x) => { $(x).innerHTML = ''; $(x).hidden = true; });
+  }
+}
+
+/* init */
+renderPopular(); addEduRow(); validate();
+</script>
+</body>
+</html>

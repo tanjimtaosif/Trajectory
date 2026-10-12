@@ -1,0 +1,30 @@
+{
+  "jobSources": [
+    { "id": "remotive", "name": "Remotive", "type": "remotive", "url": "https://remotive.com/api/remote-jobs", "enabled": true },
+    { "id": "arbeitnow", "name": "Arbeitnow", "type": "arbeitnow", "url": "https://www.arbeitnow.com/api/job-board-api", "enabled": true },
+    { "id": "themuse", "name": "The Muse", "type": "themuse", "url": "https://www.themuse.com/api/public/jobs", "enabled": true }
+  ],
+  "salarySources": [
+    { "id": "levels", "name": "Levels.fyi", "url": "https://www.levels.fyi/t/{roleSlug}", "enabled": true },
+    { "id": "glassdoor", "name": "Glassdoor", "url": "https://www.glassdoor.com/Salaries/{roleSlug}-salary-SRCH_KO0,{roleLen}.htm", "enabled": false },
+    { "id": "payscale", "name": "PayScale", "url": "https://www.payscale.com/research/US/Job={roleTitle}/Salary", "enabled": true },
+    { "id": "talent", "name": "Talent.com", "url": "https://www.talent.com/salary?job={roleQuery}", "enabled": true },
+    { "id": "indeed", "name": "Indeed", "url": "https://www.indeed.com/career/{roleSlug}/salaries", "enabled": true }
+  ],
+  "salary": {
+    "useJobFeedSalaries": true,
+    "minDataPoints": 2
+  },
+  "learningSources": [
+    "github.com", "kubernetes.io", "docs.python.org", "developer.mozilla.org", "aws.amazon.com", "docs.aws.amazon.com",
+    "developer.confluent.io", "kodekloud.com", "coursera.org", "edx.org", "freecodecamp.org", "roadmap.sh",
+    "cs50.harvard.edu", "docs.docker.com", "react.dev", "nodejs.org", "postgresql.org", "learn.microsoft.com",
+    "cloud.google.com", "fullstackopen.com", "khanacademy.org", "realpython.com", "go.dev",
+    "docs.djangoproject.com", "fastapi.tiangolo.com", "scikit-learn.org", "pytorch.org", "tensorflow.org",
+    "developers.google.com", "w3schools.com", "javascript.info", "typescriptlang.org", "terraform.io",
+    "developer.hashicorp.com", "grafana.com", "prometheus.io", "opentelemetry.io", "graphql.org", "grpc.io",
+    "owasp.org", "dataintensive.net", "udacity.com", "udemy.com", "pluralsight.com", "kaggle.com", "huggingface.co",
+    "spring.io", "dotnet.microsoft.com", "rust-lang.org", "figma.com", "sre.google", "martinfowler.com"
+  ],
+  "limits": { "maxSkills": 50, "maxJobs": 6, "cvMaxBytes": 5242880 }
+}
