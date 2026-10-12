@@ -158,7 +158,7 @@ function showSuggest() {
   $('suggest').hidden = false;
   $('suggest').querySelectorAll('li').forEach((li) => li.onmousedown = (e) => { e.preventDefault(); addSkill(li.dataset.v); });
 }
-$('skillInput').addEventListener('input', () => { sel = -1; showSuggest(); });
+$('skillInput').addEventListener('input', () => { sel = -1; showSuggest(); validate(); });
 $('skillInput').addEventListener('blur', hideSuggest);
 $('skillInput').addEventListener('keydown', (e) => {
   const items = [...$('suggest').querySelectorAll('li')];
@@ -212,8 +212,9 @@ $('drop').addEventListener('drop', (e) => { e.preventDefault(); if (e.dataTransf
 
 /* ---------- validation ---------- */
 function validate() {
-  const ok = $('position').value.trim() && skills.length;
+  const ok = $('position').value.trim() && (skills.length || $('skillInput').value.trim());
   const b = $('submit');
+  $('formMsg').className = 'text-xs text-zinc-400';
   b.disabled = !ok;
   b.className = 'h-10 px-5 rounded-lg text-sm font-semibold shrink-0 ' + (ok ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-zinc-200 text-zinc-400 cursor-not-allowed');
   $('formMsg').textContent = ok ? 'Ready when you are.' : 'Add a position and at least one skill to continue.';
@@ -346,6 +347,8 @@ $('newBtn').onclick = () => { if (abortCtl) abortCtl.abort(); setStatus(''); sho
 $('form').addEventListener('submit', async (e) => {
   e.preventDefault();
   if ($('submit').disabled) return;
+  addSkill($('skillInput').value); // commit a skill typed but not yet added with Enter
+  if (!skills.length) return;
   const fd = new FormData();
   fd.append('position', $('position').value.trim());
   fd.append('years', $('years').value);
@@ -381,7 +384,8 @@ $('form').addEventListener('submit', async (e) => {
     if (err.name === 'AbortError') return;
     setStatus('');
     show(false);
-    $('formMsg').textContent = err.message;
+    $('formMsg').textContent = err instanceof TypeError ? 'Could not reach the server. Check that it is running and try again.' : err.message;
+    $('formMsg').className = 'text-xs font-medium text-red-600';
   }
 });
 
