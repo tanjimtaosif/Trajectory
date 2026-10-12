@@ -361,7 +361,10 @@ $('form').addEventListener('submit', async (e) => {
   setStatus(spinner + ' Analyzing…');
   abortCtl = new AbortController();
   try {
-    const res = await fetch('/api/analyze', { method: 'POST', body: fd, signal: abortCtl.signal });
+    const res = await fetch('/api/analyze', { method: 'POST', body: fd, signal: abortCtl.signal }).catch((err) => {
+      if (err.name === 'AbortError') throw err;
+      throw new Error('Could not reach the server. Check that it is running and try again.');
+    });
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Request failed');
     const reader = res.body.getReader();
     const dec = new TextDecoder();
@@ -384,7 +387,7 @@ $('form').addEventListener('submit', async (e) => {
     if (err.name === 'AbortError') return;
     setStatus('');
     show(false);
-    $('formMsg').textContent = err instanceof TypeError ? 'Could not reach the server. Check that it is running and try again.' : err.message;
+    $('formMsg').textContent = err.message;
     $('formMsg').className = 'text-xs font-medium text-red-600';
   }
 });
